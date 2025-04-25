@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TetrisBattle Multiplayer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="interface">
+        <button id="createRoom">Criar Sala</button>
+        <input id="roomIdInput" placeholder="Digite o ID da Sala">
+        <button id="joinRoom">Entrar na Sala</button>
+        <div id="chat">
+            <div id="chatMessages"></div>
+            <input id="chatInput" placeholder="Digite uma mensagem..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
+        </div>
+    </div>
+    <div id="gameArea">
+        <canvas id="playerCanvas" width="320" height="640"></canvas>
+        <canvas id="opponentCanvas" width="320" height="640"></canvas>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
