@@ -1,60 +1,52 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const server = http.createServer(app);
+const io = new Server(server);
 
 app.use(express.static('public'));
 
-const rooms = {};
-
 io.on('connection', (socket) => {
-    console.log('Usuário conectado:', socket.id);
+    console.log('Novo jogador conectado:', socket.id);
 
+    // Criar uma nova sala
     socket.on('createRoom', () => {
-        const roomId = `room_${Date.now()}`;
-        rooms[roomId] = { players: [socket.id], gameState: null };
+        const roomId = 'room_' + Date.now();
         socket.join(roomId);
+        console.log('Nova sala criada:', roomId);
         socket.emit('roomCreated', roomId);
     });
 
+    // Entrar em uma sala existente
     socket.on('joinRoom', (roomId) => {
-        if (rooms[roomId] && rooms[roomId].players.length < 2) {
-            rooms[roomId].players.push(socket.id);
+        const room = io.sockets.adapter.rooms.get(roomId);
+        if (room && room.size < 2) {
             socket.join(roomId);
-            io.to(roomId).emit('startGame');
+            console.log('Jogador entrou na sala:', roomId);
+            socket.emit('roomJoined', roomId);
+            io.to(roomId).emit('chatMessage', 'Um jogador entrou na sala!');
         } else {
-            socket.emit('roomError', 'Sala cheia ou inexistente');
+            socket.emit('chatMessage', 'Sala cheia ou não encontrada!');
         }
     });
 
-    socket.on('gameState', (roomId, gameState) => {
-        if (rooms[roomId]) {
-            rooms[roomId].gameState = gameState;
-            socket.to(roomId).emit('opponentState', gameState);
+    // Enviar mensagens no chat
+    socket.on('chatMessage', (message) => {
+        const rooms = Array.from(socket.rooms);
+        const roomId = rooms.find(room => room !== socket.id); // Encontrar a sala do jogador
+        if (roomId) {
+            io.to(roomId).emit('chatMessage', message);
         }
-    });
-
-    socket.on('sendChat', (roomId, message) => {
-        io.to(roomId).emit('receiveChat', message);
     });
 
     socket.on('disconnect', () => {
-        console.log('Usuário desconectado:', socket.id);
-        for (const roomId in rooms) {
-            const room = rooms[roomId];
-            const playerIndex = room.players.indexOf(socket.id);
-            if (playerIndex !== -1) {
-                room.players.splice(playerIndex, 1);
-                if (room.players.length === 0) {
-                    delete rooms[roomId];
-                } else {
-                    io.to(roomId).emit('opponentDisconnected');
-                }
-            }
-        }
+        console.log('Jogador desconectado:', socket.id);
     });
 });
 
-http.listen(8080, () => {
-    console.log('Servidor rodando na porta 8080');
+const PORT = process.env.PORT || 8080;
+server.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
