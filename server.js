@@ -8,7 +8,9 @@ const io = new Server(server, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST']
-    }
+    },
+    pingTimeout: 60000, // 60 segundos
+    pingInterval: 25000 // 25 segundos
 });
 
 app.use(express.static('public'));

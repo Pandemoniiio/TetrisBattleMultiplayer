@@ -1,3 +1,4 @@
+<xaiArtifact></xaiArtifact>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,8 +15,12 @@
         <button id="joinRoom">Entrar na Sala</button>
     </div>
     <div id="gameArea" style="display: none;">
-        <div id="playerBoard"></div>
-        <div id="opponentBoard"></div>
+        <div id="playerBoard">
+            <canvas id="playerCanvas" width="320" height="640"></canvas>
+        </div>
+        <div id="opponentBoard">
+            <canvas id="opponentCanvas" width="320" height="640"></canvas>
+        </div>
     </div>
     <div id="chat">
         <h3>Bater papo</h3>
