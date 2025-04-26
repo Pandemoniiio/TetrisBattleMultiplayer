@@ -68,8 +68,23 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('gameAction', (data) => {
+        const rooms = Array.from(socket.rooms);
+        const roomId = rooms.find(room => room !== socket.id);
+        if (roomId) {
+            console.log(`Jogador ${socket.id} limpou ${data.linesCleared} linhas na sala ${roomId}`);
+            // Enviar o evento opponentAction para os outros jogadores na sala
+            socket.to(roomId).emit('opponentAction', { linesCleared: data.linesCleared });
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('Jogador desconectado:', socket.id);
+        const rooms = Array.from(socket.rooms);
+        const roomId = rooms.find(room => room !== socket.id);
+        if (roomId) {
+            socket.to(roomId).emit('playerLeft');
+        }
     });
 });
 

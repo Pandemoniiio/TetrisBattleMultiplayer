@@ -1,3 +1,5 @@
+let hasOpponent = false; // Variável para rastrear se há um oponente
+
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io({
         transports: ['websocket'], // Forçar uso de WebSocket
@@ -270,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('roomJoined', (roomId) => {
         console.log('Entrou na sala:', roomId);
         document.getElementById('gameArea').style.display = 'flex'; // Mostrar a área do jogo
+        hasOpponent = false; // Inicialmente, assume que não há oponente
         startGame();
     });
 
@@ -284,9 +287,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('opponentAction', (data) => {
-        if (data.linesCleared) {
+        console.log('Evento opponentAction recebido:', data); // Log para depuração
+        if (hasOpponent && data.linesCleared) {
             console.log('Recebendo linhas de lixo:', data.linesCleared);
             addGarbageLines(data.linesCleared);
+        } else {
+            console.log('Ignorando linhas de lixo: nenhum oponente presente ou dados inválidos');
         }
     });
 
@@ -296,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOver = true;
         clearInterval(gameLoop);
         opponentBoard = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        hasOpponent = false;
     });
 
     // Chat
@@ -325,5 +332,10 @@ document.addEventListener('DOMContentLoaded', () => {
         messageElement.textContent = `${data.sender}: ${data.message}`;
         chatMessages.appendChild(messageElement);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        // Verificar se a mensagem indica que outro jogador entrou
+        if (data === 'Um jogador entrou na sala!') {
+            hasOpponent = true;
+            console.log('Outro jogador entrou na sala, hasOpponent agora é true');
+        }
     });
 });
