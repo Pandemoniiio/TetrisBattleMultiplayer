@@ -1,9 +1,26 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const helmet = require('helmet'); // Adicionar helmet
 
 const app = express();
 const server = http.createServer(app);
+
+// Configurar o helmet com uma política de CSP
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://*.onrender.com"], // Permitir scripts locais e do Render
+                connectSrc: ["'self'", "wss://*.onrender.com", "ws://localhost:8080"], // Permitir WebSocket
+                styleSrc: ["'self'", "'unsafe-inline'"], // Permitir estilos inline
+                upgradeInsecureRequests: [], // Permitir conexões WebSocket
+            },
+        },
+    })
+);
+
 const io = new Server(server, {
     cors: {
         origin: '*',
