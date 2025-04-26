@@ -76,6 +76,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameLoop = null;
     let gameOver = false;
 
+    // Função para verificar se o tabuleiro contém blocos (para depuração)
+    function logBoardState(board, boardName) {
+        let hasBlocks = false;
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                if (board[row][col]) {
+                    hasBlocks = true;
+                    break;
+                }
+            }
+            if (hasBlocks) break;
+        }
+        console.log(`${boardName} contém blocos? ${hasBlocks}`);
+    }
+
     // Gerar uma sequência de tetrominos
     const tetrominoSequence = [];
     function generateSequence() {
@@ -208,6 +223,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         playerBoard = Array(ROWS).fill().map(() => Array(COLS).fill(0));
         opponentBoard = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        console.log('Iniciando jogo - estado inicial:');
+        logBoardState(playerBoard, 'playerBoard');
+        logBoardState(opponentBoard, 'opponentBoard');
         currentTetromino = getNextTetromino();
         tetrominoRow = 0;
         tetrominoCol = Math.floor(COLS / 2) - Math.floor(currentTetromino.matrix[0].length / 2);
@@ -273,6 +291,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Entrou na sala:', roomId);
         document.getElementById('gameArea').style.display = 'flex'; // Mostrar a área do jogo
         hasOpponent = false; // Inicialmente, assume que não há oponente
+        console.log('hasOpponent ao entrar na sala:', hasOpponent);
+        opponentBoard = Array(ROWS).fill().map(() => Array(COLS).fill(0)); // Garantir que o opponentBoard esteja limpo
+        logBoardState(opponentBoard, 'opponentBoard após entrar na sala');
         startGame();
     });
 
@@ -287,7 +308,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('opponentAction', (data) => {
-        console.log('Evento opponentAction recebido:', data); // Log para depuração
+        console.log('Evento opponentAction recebido:', data);
+        console.log('hasOpponent no momento:', hasOpponent);
         if (hasOpponent && data.linesCleared) {
             console.log('Recebendo linhas de lixo:', data.linesCleared);
             addGarbageLines(data.linesCleared);
@@ -303,6 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(gameLoop);
         opponentBoard = Array(ROWS).fill().map(() => Array(COLS).fill(0));
         hasOpponent = false;
+        console.log('hasOpponent após oponente sair:', hasOpponent);
+        logBoardState(opponentBoard, 'opponentBoard após oponente sair');
     });
 
     // Chat
@@ -336,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data === 'Um jogador entrou na sala!') {
             hasOpponent = true;
             console.log('Outro jogador entrou na sala, hasOpponent agora é true');
+            console.log('hasOpponent após outro jogador entrar:', hasOpponent);
         }
     });
 });
