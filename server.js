@@ -4,22 +4,31 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
 
 app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+    console.log('Requisição GET / recebida');
+    res.sendFile(__dirname + '/public/index.html');
+});
 
 io.on('connection', (socket) => {
     console.log('Novo jogador conectado:', socket.id);
 
-    // Criar uma nova sala
     socket.on('createRoom', () => {
+        console.log('Evento createRoom recebido');
         const roomId = 'room_' + Date.now();
         socket.join(roomId);
         console.log('Nova sala criada:', roomId);
         socket.emit('roomCreated', roomId);
     });
 
-    // Entrar em uma sala existente
     socket.on('joinRoom', (roomId) => {
         const room = io.sockets.adapter.rooms.get(roomId);
         if (room && room.size < 2) {
@@ -32,10 +41,9 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Enviar mensagens no chat
     socket.on('chatMessage', (message) => {
         const rooms = Array.from(socket.rooms);
-        const roomId = rooms.find(room => room !== socket.id); // Encontrar a sala do jogador
+        const roomId = rooms.find(room => room !== socket.id);
         if (roomId) {
             io.to(roomId).emit('chatMessage', message);
         }

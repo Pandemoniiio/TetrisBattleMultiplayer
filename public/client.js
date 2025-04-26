@@ -1,4 +1,26 @@
 const socket = io();
+console.log('Tentando conectar ao Socket.IO');
+
+socket.on('connect', () => {
+    console.log('Conectado ao servidor via Socket.IO');
+});
+
+socket.on('connect_error', (error) => {
+    console.log('Erro ao conectar ao Socket.IO:', error.message);
+});
+
+document.getElementById('createRoom').addEventListener('click', () => {
+    console.log('Botão Criar Sala clicado');
+    socket.emit('createRoom');
+    console.log('Evento createRoom enviado');
+});
+
+socket.on('roomCreated', (roomId) => {
+    console.log('Sala criada, ID:', roomId);
+    alert('Sala criada! ID: ' + roomId);
+    document.getElementById('roomIdInput').value = roomId;
+});
+
 const playerCanvas = document.getElementById('playerCanvas');
 const opponentCanvas = document.getElementById('opponentCanvas');
 const playerCtx = playerCanvas.getContext('2d');
@@ -222,35 +244,36 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Comunicação com o servidor
-document.getElementById('createRoom').addEventListener('click', () => {
-    socket.emit('createRoom');
-});
-
 document.getElementById('joinRoom').addEventListener('click', () => {
     const roomId = document.getElementById('roomIdInput').value;
+    console.log('Tentando entrar na sala:', roomId);
     socket.emit('joinRoom', roomId);
 });
 
-socket.on('roomCreated', (roomId) => {
-    alert('Sala criada: ' + roomId);
-    document.getElementById('roomIdInput').value = roomId;
+socket.on('roomJoined', (roomId) => {
+    console.log('Entrou na sala:', roomId);
+    startGame();
 });
 
 socket.on('roomFull', () => {
+    console.log('Sala cheia ou não encontrada!');
     alert('Sala cheia ou não encontrada!');
 });
 
 socket.on('startGame', () => {
+    console.log('Iniciando o jogo...');
     startGame();
 });
 
 socket.on('opponentAction', (data) => {
     if (data.linesCleared) {
+        console.log('Recebendo linhas de lixo:', data.linesCleared);
         addGarbageLines(data.linesCleared);
     }
 });
 
 socket.on('playerLeft', () => {
+    console.log('O oponente saiu da partida!');
     alert('O oponente saiu da partida!');
     gameOver = true;
     clearInterval(gameLoop);
@@ -258,16 +281,28 @@ socket.on('playerLeft', () => {
 });
 
 // Chat
+document.getElementById('sendChat').addEventListener('click', () => {
+    sendChatMessage();
+});
+
+document.getElementById('chatInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        sendChatMessage();
+    }
+});
+
 function sendChatMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
     if (message) {
+        console.log('Enviando mensagem de chat:', message);
         socket.emit('chatMessage', { sender: socket.id, message });
         input.value = '';
     }
 }
 
 socket.on('chatMessage', (data) => {
+    console.log('Mensagem de chat recebida:', data);
     const messageElement = document.createElement('div');
     messageElement.textContent = `${data.sender}: ${data.message}`;
     chatMessages.appendChild(messageElement);
